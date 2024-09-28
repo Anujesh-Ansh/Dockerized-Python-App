@@ -1,34 +1,44 @@
 pipeline {
     agent any
-
+    
     environment {
-        DOCKER_IMAGE = "python-web-app"
-        DOCKER_TAG = "latest"
-        DOCKER_REGISTRY = ""
+        PROJECT_NAME = "Dockerized Python App"
+        REPO_PATH = "/Users/anujeshansh/.jenkins/workspace/Dockerized Python App"
+        DOCKER_IMAGE_NAME = "python-web-app"
+        DOCKER_CONTAINER_NAME = "python-container"
+        
+        // Add Docker's path explicitly
+        PATH = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Applications/Docker.app/Contents/Resources/bin:/opt/homebrew/bin:${env.PATH}"
     }
-
+    
     stages {
-        stage('Clone Repository') {
+        stage('Stage 1: Cloning Repository...') {
             steps {
-                // Clone the Git repository
-                git 'https://github.com/Anujesh-Ansh/Dockerized-Python-App.git'  // Updated with your repo URL
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                // Build the Docker image using the Dockerfile in your project
-                script {
-                    sh 'docker build -t $DOCKER_IMAGE:$DOCKER_TAG .'
+                echo "Project Name: ${env.PROJECT_NAME}"
+                ws("${env.REPO_PATH}") {
+                    git branch: 'master', url: 'https://github.com/Anujesh-Ansh/Dockerized-Python-App.git'
                 }
             }
         }
-
-        stage('Run Docker Container') {
+        stage('Stage 2: Build Docker Image') {
             steps {
-                // Run the Docker container on a different port (8000 in this case)
-                script {
-                    sh 'docker run -d -p 8000:8000 $DOCKER_IMAGE:$DOCKER_TAG'
+                echo 'Building Docker Image...'
+                dir("${env.REPO_PATH}") {
+                    script {
+                        // Build Docker image
+                        sh "docker build -t ${env.DOCKER_IMAGE_NAME} ."
+                    }
+                }
+            }
+        }
+        stage('Stage 3: Run Docker Container') {
+            steps {
+                echo 'Running Docker Container...'
+                dir("${env.REPO_PATH}") {
+                    script {
+                        // Run Docker container
+                        sh "docker run --name ${env.DOCKER_CONTAINER_NAME} -d -p 5000:5000 ${env.DOCKER_IMAGE_NAME}"
+                    }
                 }
             }
         }
